@@ -1,14 +1,12 @@
 
 const express = require("express");
 const path = require("path");
+
 const db = require("./database");
 
 const app = express();
-
-// Puerto local o el que proporcione el alojamiento.
 const PORT = process.env.PORT || 3000;
 
-// Configuración del servidor.
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -16,12 +14,9 @@ app.use(express.static(path.join(__dirname, "public")));
 // 1. CONSULTAR TODAS LAS TAREAS
 // ======================================
 
-app.get("/api/tasks", (req, res) => {
+app.get("/api/tasks", async (req, res) => {
   try {
-    const tasks = db.prepare(
-      "SELECT * FROM tasks ORDER BY id DESC"
-    ).all();
-
+    const tasks = await db.getTasks();
     res.json(tasks);
   } catch (error) {
     console.error("Error al consultar tareas:", error);
@@ -35,7 +30,7 @@ app.get("/api/tasks", (req, res) => {
 // 2. CREAR UNA TAREA
 // ======================================
 
-app.post("/api/tasks", (req, res) => {
+app.post("/api/tasks", async (req, res) => {
   try {
     const {
       title,
@@ -82,18 +77,14 @@ app.post("/api/tasks", (req, res) => {
       });
     }
 
-    const finalDate = due_date || null;
-
-    const result = db.prepare(`
-      INSERT INTO tasks (title, priority, due_date)
-      VALUES (?, ?, ?)
-    `).run(title.trim(), priority, finalDate);
-
-    const task = db.prepare(
-      "SELECT * FROM tasks WHERE id = ?"
-    ).get(result.lastInsertRowid);
+    const task = await db.createTask(
+      title.trim(),
+      priority,
+      due_date || null
+    );
 
     res.status(201).json(task);
+
   } catch (error) {
     console.error("Error al crear tarea:", error);
     res.status(500).json({
@@ -106,7 +97,7 @@ app.post("/api/tasks", (req, res) => {
 // 3. MODIFICAR ESTADO DE UNA TAREA
 // ======================================
 
-app.patch("/api/tasks/:id", (req, res) => {
+app.patch("/api/tasks/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const { completed } = req.body;
@@ -121,21 +112,16 @@ app.patch("/api/tasks/:id", (req, res) => {
       });
     }
 
-    const result = db.prepare(
-      "UPDATE tasks SET completed = ? WHERE id = ?"
-    ).run(completed ? 1 : 0, id);
+    const task = await db.updateTask(id, completed);
 
-    if (result.changes === 0) {
+    if (!task) {
       return res.status(404).json({
         error: "Tarea no encontrada"
       });
     }
 
-    const task = db.prepare(
-      "SELECT * FROM tasks WHERE id = ?"
-    ).get(id);
-
     res.json(task);
+
   } catch (error) {
     console.error("Error al actualizar tarea:", error);
     res.status(500).json({
@@ -148,7 +134,7 @@ app.patch("/api/tasks/:id", (req, res) => {
 // 4. ELIMINAR UNA TAREA
 // ======================================
 
-app.delete("/api/tasks/:id", (req, res) => {
+app.delete("/api/tasks/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
@@ -158,11 +144,9 @@ app.delete("/api/tasks/:id", (req, res) => {
       });
     }
 
-    const result = db.prepare(
-      "DELETE FROM tasks WHERE id = ?"
-    ).run(id);
+    const deleted = await db.deleteTask(id);
 
-    if (result.changes === 0) {
+    if (!deleted) {
       return res.status(404).json({
         error: "Tarea no encontrada"
       });
@@ -171,6 +155,7 @@ app.delete("/api/tasks/:id", (req, res) => {
     res.json({
       mensaje: "Tarea eliminada correctamente"
     });
+
   } catch (error) {
     console.error("Error al eliminar tarea:", error);
     res.status(500).json({
@@ -193,7 +178,19 @@ app.get("/api/status", (req, res) => {
 // INICIAR SERVIDOR
 // ======================================
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("Base de datos conectada.");
-  console.log(`TaskFlow disponible en el puerto ${PORT}`);
-});
+async function startServer() {
+  try {
+    await db.init();
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("Base de datos conectada correctamente.");
+      console.log(`TaskFlow disponible en el puerto ${PORT}`);
+    });
+
+  } catch (error) {
+    console.error("No se pudo iniciar TaskFlow:", error);
+    process.exit(1);
+  }
+}
+
+startServer();
