@@ -4,7 +4,9 @@ const path = require("path");
 const db = require("./database");
 
 const app = express();
-const PORT = 3000;
+
+// Puerto local o el que proporcione el alojamiento.
+const PORT = process.env.PORT || 3000;
 
 // Configuración del servidor.
 app.use(express.json());
@@ -21,7 +23,6 @@ app.get("/api/tasks", (req, res) => {
     ).all();
 
     res.json(tasks);
-
   } catch (error) {
     console.error("Error al consultar tareas:", error);
     res.status(500).json({
@@ -44,21 +45,18 @@ app.post("/api/tasks", (req, res) => {
 
     const validPriorities = ["baja", "media", "alta"];
 
-    // Validar título.
     if (typeof title !== "string" || !title.trim()) {
       return res.status(400).json({
         error: "El título es obligatorio"
       });
     }
 
-    // Validar prioridad.
     if (!validPriorities.includes(priority)) {
       return res.status(400).json({
         error: "Prioridad no válida"
       });
     }
 
-    // Validar fecha.
     let validDate = true;
 
     if (due_date !== null && due_date !== "") {
@@ -86,19 +84,16 @@ app.post("/api/tasks", (req, res) => {
 
     const finalDate = due_date || null;
 
-    // Guardar tarea en SQLite.
     const result = db.prepare(`
       INSERT INTO tasks (title, priority, due_date)
       VALUES (?, ?, ?)
     `).run(title.trim(), priority, finalDate);
 
-    // Recuperar tarea creada.
     const task = db.prepare(
       "SELECT * FROM tasks WHERE id = ?"
     ).get(result.lastInsertRowid);
 
     res.status(201).json(task);
-
   } catch (error) {
     console.error("Error al crear tarea:", error);
     res.status(500).json({
@@ -116,8 +111,11 @@ app.patch("/api/tasks/:id", (req, res) => {
     const id = Number(req.params.id);
     const { completed } = req.body;
 
-    if (!Number.isInteger(id) || id <= 0 ||
-        typeof completed !== "boolean") {
+    if (
+      !Number.isInteger(id) ||
+      id <= 0 ||
+      typeof completed !== "boolean"
+    ) {
       return res.status(400).json({
         error: "Datos no válidos"
       });
@@ -138,7 +136,6 @@ app.patch("/api/tasks/:id", (req, res) => {
     ).get(id);
 
     res.json(task);
-
   } catch (error) {
     console.error("Error al actualizar tarea:", error);
     res.status(500).json({
@@ -174,7 +171,6 @@ app.delete("/api/tasks/:id", (req, res) => {
     res.json({
       mensaje: "Tarea eliminada correctamente"
     });
-
   } catch (error) {
     console.error("Error al eliminar tarea:", error);
     res.status(500).json({
@@ -197,7 +193,7 @@ app.get("/api/status", (req, res) => {
 // INICIAR SERVIDOR
 // ======================================
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("Base de datos conectada.");
-  console.log(`TaskFlow disponible en http://localhost:${PORT}`);
+  console.log(`TaskFlow disponible en el puerto ${PORT}`);
 });
