@@ -60,12 +60,29 @@ function updateStats() {
   progressPercentage.textContent = percentage + "%";
 }
 
-// Formatear fechas.
+// Normalizar y formatear fechas.
 function formatDate(date) {
   if (!date) return "Sin fecha límite";
 
-  const [year, month, day] = date.split("-");
+  // Acepta tanto YYYY-MM-DD como fechas ISO de PostgreSQL.
+  const datePart = String(date).split("T")[0];
+  const [year, month, day] = datePart.split("-");
+
+  if (!year || !month || !day) return "Fecha no válida";
+
   return `${day}/${month}/${year}`;
+}
+
+// Convertir fecha a formato comparable sin problemas de zona horaria.
+function getDateForComparison(date) {
+  if (!date) return null;
+
+  const datePart = String(date).split("T")[0];
+  const [year, month, day] = datePart.split("-").map(Number);
+
+  if (!year || !month || !day) return null;
+
+  return new Date(year, month - 1, day);
 }
 
 // Renderizar tareas.
@@ -127,13 +144,18 @@ function renderTask(task) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const deadline = new Date(task.due_date + "T00:00:00");
+    const deadline = getDateForComparison(task.due_date);
 
-    if (deadline < today) {
-      dateBadge.classList.add("date-overdue");
-      dateBadge.textContent = "Vencida: " + formatDate(task.due_date);
-    } else if (deadline.getTime() === today.getTime()) {
-      dateBadge.classList.add("date-today");
+    if (deadline) {
+      deadline.setHours(0, 0, 0, 0);
+
+      if (deadline < today) {
+        dateBadge.classList.add("date-overdue");
+        dateBadge.textContent =
+          "Vencida: " + formatDate(task.due_date);
+      } else if (deadline.getTime() === today.getTime()) {
+        dateBadge.classList.add("date-today");
+      }
     }
   }
 
