@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow | Mis tareas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <h1>TaskFlow</h1>
+    <p>Organiza tu día, alcanza tus objetivos.</p>
+  </header>
+
+  <main class="container">
+    <section class="welcome">
+      <h2>Mis tareas</h2>
+      <p>Gestiona tus tareas de forma sencilla.</p>
+    </section>
+    <section class="stats">
+      <section class="progress-section">
+  <div class="progress-heading">
+    <span>Progreso general</span>
+    <strong id="progress-percentage">0%</strong>
+  </div>
+
+  <div class="progress-track">
+    <div id="progress-bar"></div>
+  </div>
+</section>  
+  <div class="stat-card">
+    <span>Total de tareas</span>
+    <strong id="total-tasks">0</strong>
+  </div>
+
+  <div class="stat-card">
+    <span>Pendientes</span>
+    <strong id="pending-tasks">0</strong>
+  </div>
+
+  <div class="stat-card">
+    <span>Completadas</span>
+    <strong id="completed-tasks">0</strong>
+  </div>
+</section>
+
+<section class="filters">
+  <button class="filter-btn active" data-filter="all">
+    Todas
+  </button>
+
+  <button class="filter-btn" data-filter="pending">
+    Pendientes
+  </button>
+
+  <button class="filter-btn" data-filter="completed">
+    Completadas
+  </button>
+</section>
+
+
+
+<form id="task-form">
+  <input
+    id="task-input"
+    type="text"
+    placeholder="¿Qué tienes que hacer?"
+    required
+  >
+
+  <select id="task-priority">
+    <option value="baja">Prioridad baja</option>
+    <option value="media" selected>Prioridad media</option>
+    <option value="alta">Prioridad alta</option>
+  </select>
+
+  <input
+    type="date"
+    id="task-due-date"
+    title="Fecha límite"
+  >
+
+  <button type="submit">Añadir tarea</button>
+</form>
+
+<div class="search-box">
+  <input
+    type="search"
+    id="task-search"
+    placeholder="Buscar tareas..."
+  >
+</div>
+
+
+<div class="search-box">
+  <input
+    type="search"
+    id="task-search"
+    placeholder="Buscar tareas..."
+  >
+</div>
+
+    <ul id="task-list"></ul>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
