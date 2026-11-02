@@ -2,8 +2,13 @@
 const Database = require("better-sqlite3");
 const path = require("path");
 
+// Permitir configurar dónde se guarda la base de datos.
+// En local seguirá utilizando taskflow.db.
+const databasePath =
+  process.env.DB_PATH || path.join(__dirname, "taskflow.db");
+
 // Crear o abrir la base de datos.
-const db = new Database(path.join(__dirname, "taskflow.db"));
+const db = new Database(databasePath);
 
 // Crear la tabla principal.
 db.exec(`
@@ -37,6 +42,8 @@ if (!columns.some(column => column.name === "due_date")) {
 }
 
 console.log("Base de datos SQLite conectada correctamente.");
+console.log("Ubicación de la base de datos:", databasePath);
 
 // Exportar la conexión.
 module.exports = db;
+
